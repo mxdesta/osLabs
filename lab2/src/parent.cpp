@@ -1,49 +1,65 @@
-#include "parent.h"
+#include <iostream>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <string>
+#include <cstring>
+#include <fstream>
 
-void handle_error(const char* msg) {
-    perror(msg);
-    exit(EXIT_FAILURE);
-}
+void ParentMain() {
+    int pipe1[2], pipe2[2];
 
-void parent_process(int pipe1[2], int pipe2[2], const std::string& filename) {
-    close(pipe1[0]);  
-    close(pipe2[1]);  
-
-   
-    int file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    if (file_fd == -1) {
-        handle_error("Ошибка открытия файла");
+    if (pipe(pipe1) == -1 || pipe(pipe2) == -1) {
+        perror("pipe");
+        return;
     }
 
-  
-    dup2(file_fd, STDOUT_FILENO);
+    pid_t pid = fork();
+    if (pid == -1) {
+        perror("fork");
+        return;
+    }
 
-  
-    std::string input;
-    std::cin.ignore();  
-    while (true) {
-        std::cout << "Введите строку (или 'exit' для выхода): ";
-        std::getline(std::cin, input);
+    if (pid == 0) {
+        close(pipe1[1]);
+        close(pipe2[0]);
+        execl("/home/denis/Рабочий стол/os/OS-labs-template/build/lab2/child", "child", std::to_string(pipe1[0]).c_str(), std::to_string(pipe2[1]).c_str(), nullptr);
+        perror("Execl failed");
+        exit(1);
+    } else { 
+        close(pipe1[0]);
+        close(pipe2[1]);
 
-        if (input == "exit") {
-            break;
+        std::string filename;
+        std::cout << "Enter filename: ";
+        std::getline(std::cin, filename);
+
+        std::ofstream outfile(filename);
+        if (!outfile) {
+            std::cerr << "Cannot open file for writing.\n";
+            return;
         }
 
-        write(pipe1[1], input.c_str(), input.length() + 1);  
+        std::string line;
+        std::cout << "Enter text lines (type 'exit' to stop):" << std::endl;
+        while (std::getline(std::cin, line)) {
+            if (line == "exit") break;
+
+            write(pipe1[1], line.c_str(), line.size() + 1);
+            char buffer[256];
+            ssize_t bytesRead = read(pipe2[0], buffer, sizeof(buffer) - 1); 
+            if (bytesRead > 0) {
+                buffer[bytesRead] = '\0';
+                if (strncmp(buffer, "Error:", 6) == 0) {
+                    std::cout << "Child error: " << buffer << std::endl;
+                } else {
+                    outfile << buffer; 
+                }
+            }
+        }
+        
+        close(pipe1[1]);
+        close(pipe2[0]);
+        wait(nullptr); 
     }
-
-    close(pipe1[1]);  
-  
-    wait(nullptr);
-
-  
-    char error_buffer[BUFFER_SIZE];
-    ssize_t bytes_read;
-    while ((bytes_read = read(pipe2[0], error_buffer, BUFFER_SIZE)) > 0) {
-        error_buffer[bytes_read] = '\0';
-        std::cerr << "Родительский процесс получил ошибку: " << error_buffer << std::endl;
-    }
-
-    close(pipe2[0]);  
-    close(file_fd);   
 }

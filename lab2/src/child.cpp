@@ -1,32 +1,34 @@
-#include "child.h"
+#include <iostream>
+#include <unistd.h>
+#include <cstring>
+#include <cctype>
 
-bool is_valid_string(const std::string& str) {
-    if (str.empty()) {
-        return false;  
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        std::cerr << "Usage: child <readPipe> <writePipe>\n";
+        return 1;
     }
-    return isupper(str[0]);  
-}
 
-void child_process(int pipe1[2], int pipe2[2]) {
-    close(pipe1[1]);  
-    close(pipe2[0]);  
+    int readPipe = std::stoi(argv[1]);
+    int writePipe = std::stoi(argv[2]);
 
-    
-    dup2(pipe2[1], STDERR_FILENO);
+    char buffer[256];
+    ssize_t bytesRead;
 
- 
-    char buffer[BUFFER_SIZE];
-    ssize_t bytes_read;
-    while ((bytes_read = read(pipe1[0], buffer, BUFFER_SIZE)) > 0) {
-        buffer[bytes_read] = '\0';
 
-        if (is_valid_string(buffer)) {
-            std::cout << "Дочерний процесс: " << buffer << std::endl;
+    while ((bytesRead = read(readPipe, buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[bytesRead] = '\0';
+
+
+        if (isupper(buffer[0])) {
+            write(writePipe, buffer, bytesRead);
         } else {
-            std::cerr << "Ошибка: строка не начинается с заглавной буквы" << std::endl;
+            const char *errorMsg = "Error: Line must start with an uppercase letter.\n";
+            write(writePipe, errorMsg, strlen(errorMsg));
         }
     }
 
-    close(pipe1[0]);  
-    close(pipe2[1]);  
+    close(readPipe);
+    close(writePipe);
+    return 0;
 }
