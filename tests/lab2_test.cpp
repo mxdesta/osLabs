@@ -55,7 +55,7 @@ TEST(ProcessTest, InvalidInputTest) {
     ParentMain();
 
     std::string content = readFileContent(tempFile.getFilename());
-    EXPECT_EQ(content, "");  // Invalid line should not be written to file
+    EXPECT_EQ(content, ""); 
 }
 
 int main(int argc, char **argv) {

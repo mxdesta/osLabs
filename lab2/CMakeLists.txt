@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(ProcessCommunication)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 # Создаем исполняемый файл для родительского процесса
 add_executable(ProcessCommunication

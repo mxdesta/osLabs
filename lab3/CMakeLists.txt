@@ -1,5 +1,17 @@
-add_executable(lab3 main.cpp include/lab3.h src/lab3.cpp include/utils.h)
+cmake_minimum_required(VERSION 3.10)
+project(Threads)
 
-target_include_directories(lab3 PRIVATE include)
+set(CMAKE_CXX_STANDARD 17)
 
-target_link_libraries(lab3 PRIVATE Threads::Threads)
+# Создаем исполняемый файл для родительского процесса
+add_executable(Threads
+    main.cpp
+    src/quicksort.cpp
+    src/thread_pool.cpp
+
+)
+
+
+
+# Указываем директорию с заголовочными файлами
+target_include_directories(Threads PRIVATE include)
