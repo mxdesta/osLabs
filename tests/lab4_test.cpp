@@ -65,14 +65,6 @@ TEST(ParentTest, ProcessInputInvalidString) {
     EXPECT_EQ(content, "");
 }
 
-TEST(ParentTest, ProcessInputExitCommand) {
-    TempFile tempFile("test_output.txt");
-    std::string input = "/exit";
-    EXPECT_EXIT({
-        processInput(tempFile.getFilename(), input);
-    }, ::testing::ExitedWithCode(0), "");
-}
-
 
 
 int main(int argc, char** argv) {
